@@ -1,0 +1,48 @@
+# Render "Blueprint" - lets you click "New +" -> "Blueprint" in the Render
+# dashboard, point it at this repo, and it provisions both resources
+# below together. Secrets (LINE/Stripe keys, JWT_SECRET) are marked
+# sync:false so Render prompts you to paste them in rather than storing
+# them in this file. FRONTEND_URL you fill in after your static frontend
+# (e.g. on Netlify) has a real URL.
+databases:
+  - name: cat-hotel-db
+    plan: free
+    postgresMajorVersion: 16
+
+services:
+  - type: web
+    name: cat-hotel-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cat-hotel-db
+          property: connectionString
+      - key: FRONTEND_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: LINE_LOGIN_CHANNEL_ID
+        sync: false
+      - key: LINE_LOGIN_CHANNEL_SECRET
+        sync: false
+      - key: LINE_LOGIN_CALLBACK_URL
+        sync: false
+      - key: LINE_MESSAGING_CHANNEL_SECRET
+        sync: false
+      - key: LINE_MESSAGING_CHANNEL_ACCESS_TOKEN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false

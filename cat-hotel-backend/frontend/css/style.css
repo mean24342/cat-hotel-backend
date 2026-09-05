@@ -1,0 +1,229 @@
+/* ============================================================
+   Catnap Hotel — design tokens
+   Concept: a boutique cat-boarding inn, not a SaaS dashboard.
+   Recurring motif: a physical hotel key-tag (rounded chip with a
+   punched ring-hole) used everywhere a room number appears.
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --color-bg: #F3EFE4;
+  --color-bg-alt: #ECE5D4;
+  --color-ink: #2B2420;
+  --color-ink-soft: #6B6154;
+  --color-line: #DCD3BE;
+
+  --color-honey: #D9A62E;
+  --color-honey-ink: #4A3510;
+  --color-slate: #5B6B73;
+  --color-slate-dark: #3E4A50;
+  --color-moss: #6B7A5E;
+  --color-moss-bg: #E4E9DD;
+  --color-brick: #B5533C;
+  --color-brick-bg: #F3E1DA;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Work Sans', system-ui, sans-serif;
+
+  --max-width: 68rem;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  line-height: 1.55;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 0.5em;
+  color: var(--color-ink);
+}
+h1 { font-size: clamp(2.1rem, 4vw, 3.1rem); font-weight: 500; }
+h2 { font-size: clamp(1.5rem, 2.6vw, 2rem); }
+h3 { font-size: 1.15rem; font-weight: 600; }
+
+p { max-width: 40rem; color: var(--color-ink-soft); }
+a { color: var(--color-slate-dark); }
+
+.wrap { max-width: var(--max-width); margin: 0 auto; padding: 0 1.5rem; }
+
+/* --- Header / nav --- */
+.site-header {
+  border-bottom: 1px solid var(--color-line);
+  background: var(--color-bg);
+}
+.site-header .wrap {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 1.1rem; padding-bottom: 1.1rem;
+}
+.brand {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-ink);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.brand-mark { display: inline-block; width: 1.4rem; height: 1.4rem; }
+nav.main-nav { display: flex; gap: 1.6rem; align-items: center; }
+nav.main-nav a {
+  text-decoration: none;
+  color: var(--color-ink-soft);
+  font-size: 0.95rem;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+nav.main-nav a:hover,
+nav.main-nav a.active { color: var(--color-ink); border-color: var(--color-honey); }
+.nav-cta {
+  background: var(--color-honey); color: var(--color-honey-ink) !important;
+  padding: 0.5rem 1rem; border-radius: var(--radius); border-bottom: none !important;
+  font-weight: 600;
+}
+
+/* --- Buttons / forms --- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  font-family: var(--font-body); font-weight: 600; font-size: 0.98rem;
+  padding: 0.75rem 1.4rem; border-radius: var(--radius);
+  border: 1px solid transparent; cursor: pointer; text-decoration: none;
+  transition: transform 0.08s ease, background 0.15s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--color-honey); color: var(--color-honey-ink); }
+.btn-primary:hover { background: #C89A28; }
+.btn-primary:disabled { background: var(--color-line); color: var(--color-ink-soft); cursor: not-allowed; }
+.btn-secondary { background: transparent; border-color: var(--color-slate); color: var(--color-slate-dark); }
+.btn-secondary:hover { background: var(--color-slate); color: #fff; }
+.btn-block { width: 100%; }
+
+label { display: block; font-size: 0.9rem; font-weight: 600; margin: 0 0 0.35rem; color: var(--color-ink); }
+input, select, textarea {
+  width: 100%; font-family: var(--font-body); font-size: 1rem;
+  padding: 0.65rem 0.8rem; border: 1px solid var(--color-line); border-radius: var(--radius);
+  background: #fff; color: var(--color-ink);
+}
+input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--color-slate); outline-offset: 2px;
+}
+.field { margin-bottom: 1.1rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.hint { font-size: 0.85rem; color: var(--color-ink-soft); margin-top: 0.3rem; }
+.form-error { color: var(--color-brick); background: var(--color-brick-bg); padding: 0.7rem 0.9rem; border-radius: var(--radius); font-size: 0.92rem; margin: 0.8rem 0; }
+
+/* --- Sections --- */
+section { padding: 4rem 0; }
+section.alt { background: var(--color-bg-alt); }
+
+.hero { padding-top: 3.5rem; }
+.hero .wrap { display: grid; grid-template-columns: 1.15fr 1fr; gap: 3rem; align-items: center; }
+.hero-actions { display: flex; gap: 0.9rem; margin-top: 1.6rem; flex-wrap: wrap; }
+.hero-art { justify-self: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .hero-art { animation: nap-breathe 4.5s ease-in-out infinite alternate; }
+}
+@keyframes nap-breathe { from { transform: scale(1); } to { transform: scale(1.025); } }
+
+/* --- Feature strip: 3 plain blocks, not middot-joined meta --- */
+.feature-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+.feature-strip .feature h3 { margin-bottom: 0.3rem; }
+.feature-strip .feature p { font-size: 0.94rem; }
+
+/* --- Numbered steps: legitimate sequence --- */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.2rem; counter-reset: step; }
+.step { position: relative; padding-left: 2.8rem; }
+.step::before {
+  counter-increment: step; content: counter(step);
+  position: absolute; left: 0; top: 0.1rem;
+  width: 2rem; height: 2rem; border-radius: 50%;
+  background: var(--color-slate-dark); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 1rem;
+}
+
+/* --- Key-tag chip: the site's one recurring bold motif --- */
+.key-tag {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 3.1rem; height: 2.3rem; padding: 0 0.75rem 0 1.15rem;
+  border-radius: 6px;
+  font-family: var(--font-display); font-weight: 600; font-size: 1.02rem;
+  background: var(--color-slate-dark); color: #fff;
+}
+.key-tag::before {
+  content: ''; position: absolute; left: 0.42rem; top: 50%;
+  width: 0.42rem; height: 0.42rem; border-radius: 50%;
+  background: var(--color-bg); transform: translateY(-50%);
+}
+.key-tag.is-available { background: var(--color-moss); }
+.key-tag.is-unavailable { background: var(--color-brick); opacity: 0.75; }
+
+/* --- Ledger list (rooms, bookings, points history) --- */
+.ledger { border-top: 1px solid var(--color-line); }
+.ledger-row {
+  display: flex; align-items: center; gap: 1.2rem;
+  padding: 1.1rem 0; border-bottom: 1px solid var(--color-line);
+}
+.ledger-row .ledger-main { flex: 1; min-width: 0; }
+.ledger-row .ledger-main h3 { margin: 0 0 0.15rem; font-size: 1.05rem; }
+.ledger-row .ledger-meta { font-size: 0.88rem; color: var(--color-ink-soft); }
+.ledger-row .ledger-side { text-align: right; white-space: nowrap; }
+.ledger-empty { padding: 1.4rem 0; color: var(--color-ink-soft); font-size: 0.95rem; }
+
+/* --- Status tag (booking / payment status) --- */
+.status-tag {
+  display: inline-block; font-size: 0.8rem; font-weight: 600;
+  padding: 0.2rem 0.6rem; border-radius: 999px;
+}
+.status-pending { background: #F3E7CE; color: #7A5A17; }
+.status-confirmed, .status-paid, .status-earn { background: var(--color-moss-bg); color: #3E4A34; }
+.status-cancelled, .status-failed { background: var(--color-brick-bg); color: #7A3A28; }
+.status-checked_in, .status-checked_out { background: #E4E9F0; color: #2E3D46; }
+
+/* --- Card-free panels (deliberately not the SaaS shadow-card look) --- */
+.panel { border: 1px solid var(--color-line); border-radius: var(--radius); padding: 1.6rem; background: #FBF9F3; }
+.panel + .panel { margin-top: 1.4rem; }
+.panel-title { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+
+/* --- Points balance block --- */
+.points-hero { display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap; }
+.points-hero .points-number { font-family: var(--font-display); font-size: 3rem; font-weight: 600; }
+.tier-pill {
+  display: inline-block; padding: 0.25rem 0.75rem; border-radius: 999px;
+  background: var(--color-honey); color: var(--color-honey-ink); font-weight: 600; font-size: 0.85rem;
+}
+
+/* --- Footer --- */
+.site-footer { border-top: 1px solid var(--color-line); padding: 2.2rem 0; margin-top: 2rem; }
+.site-footer p { font-size: 0.85rem; color: var(--color-ink-soft); margin: 0; }
+
+/* --- Utility --- */
+.center { text-align: center; }
+.muted { color: var(--color-ink-soft); }
+.stack { display: flex; flex-direction: column; gap: 0.5rem; }
+.spinner {
+  width: 1.4rem; height: 1.4rem; border-radius: 50%;
+  border: 3px solid var(--color-line); border-top-color: var(--color-slate-dark);
+  animation: spin 0.8s linear infinite; display: inline-block;
+}
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1.6s; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 780px) {
+  .hero .wrap { grid-template-columns: 1fr; }
+  .hero-art { order: -1; max-width: 220px; }
+  .feature-strip, .steps { grid-template-columns: 1fr; }
+  .field-row { grid-template-columns: 1fr; }
+  nav.main-nav { gap: 1rem; }
+}

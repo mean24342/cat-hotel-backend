@@ -1,0 +1,53 @@
+# Local/self-hosted stack: Postgres + the Express backend. The frontend
+# is a static site (frontend/) and is deployed separately (see README) -
+# it isn't part of this compose file.
+#
+# First run (once per fresh database):
+#   docker compose up -d db
+#   docker compose --profile tools run --rm migrate
+#   docker compose up -d backend
+#
+# After that, `docker compose up -d` brings up both.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cat_hotel
+    ports:
+      - "5432:5432"
+    volumes:
+      - cat_hotel_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: .
+    command: node scripts/run-migrations.js
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/cat_hotel
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["tools"] # only runs when explicitly invoked, not on `up`
+
+  backend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/cat_hotel
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  cat_hotel_db_data:

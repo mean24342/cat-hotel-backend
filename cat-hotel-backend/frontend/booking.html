@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>จองห้องพัก — Catnap Hotel</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <section style="padding-bottom: 2rem;">
+    <div class="wrap">
+      <h1>จองห้องพัก</h1>
+      <p>เลือกวันที่เข้าพัก-ออก เพื่อดูห้องว่างทั้ง 8 ห้อง</p>
+
+      <form id="search-form" class="panel" style="max-width: 34rem;">
+        <div class="field-row">
+          <div class="field">
+            <label for="check_in">วันเข้าพัก</label>
+            <input type="date" id="check_in" required />
+          </div>
+          <div class="field">
+            <label for="check_out">วันออก</label>
+            <input type="date" id="check_out" required />
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">ค้นหาห้องว่าง</button>
+        <p id="search-error" class="form-error" style="display:none;"></p>
+      </form>
+    </div>
+  </section>
+
+  <section class="alt" id="results-section" style="display:none; padding-top: 2.5rem;">
+    <div class="wrap">
+      <h2>ห้องว่างสำหรับวันที่เลือก</h2>
+      <div class="ledger" id="room-results"></div>
+    </div>
+  </section>
+
+  <section id="pet-section" style="display:none; padding-top: 1rem;">
+    <div class="wrap">
+      <h2>ยืนยันการจอง</h2>
+      <div class="panel" id="selected-room-summary"></div>
+
+      <div class="panel" id="login-required-panel" style="display:none;">
+        <p style="margin:0 0 1rem;">กรุณาเข้าสู่ระบบก่อนทำการจอง</p>
+        <a class="btn btn-primary" id="login-required-link" href="login.html?next=booking.html">เข้าสู่ระบบด้วย LINE</a>
+      </div>
+
+      <form id="booking-form" class="panel" style="display:none;">
+        <div class="field">
+          <label for="pet_id">เลือกน้องแมว</label>
+          <select id="pet_id" required></select>
+          <p class="hint">ยังไม่มีน้องแมวในระบบ? เพิ่มด้านล่างนี้ได้เลย</p>
+        </div>
+
+        <details style="margin-bottom: 1.2rem;">
+          <summary style="cursor:pointer; font-weight:600; margin-bottom: 0.8rem;">+ เพิ่มน้องแมวใหม่</summary>
+          <div class="field">
+            <label for="new_pet_name">ชื่อน้องแมว</label>
+            <input type="text" id="new_pet_name" placeholder="เช่น มะลิ" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="new_pet_breed">สายพันธุ์ (ไม่บังคับ)</label>
+              <input type="text" id="new_pet_breed" placeholder="เช่น สก็อตติชโฟลด์" />
+            </div>
+            <div class="field">
+              <label for="new_pet_weight">น้ำหนัก (กก., ไม่บังคับ)</label>
+              <input type="number" step="0.1" id="new_pet_weight" />
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary" id="add-pet-btn">เพิ่มน้องแมวนี้</button>
+        </details>
+
+        <div class="field">
+          <label for="special_requests">คำขอพิเศษ (ไม่บังคับ)</label>
+          <textarea id="special_requests" rows="3" placeholder="เช่น แพ้อาหารบางชนิด, ต้องกินยาตามเวลา"></textarea>
+        </div>
+
+        <div class="panel" id="quote-summary" style="background:#F0EAD9; margin-bottom:1.2rem;"></div>
+
+        <button type="submit" class="btn btn-primary btn-block">ยืนยันการจอง</button>
+        <p id="booking-error" class="form-error" style="display:none;"></p>
+      </form>
+
+      <div class="panel" id="booking-success" style="display:none;"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  let currentUser = null;
+  let selectedRoom = null; // { id, room_number, room_type, base_price_per_night }
+
+  function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  // --- Step 1: availability search ---
+  document.getElementById('check_in').min = todayStr();
+  document.getElementById('check_out').min = todayStr();
+
+  document.getElementById('search-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('search-error');
+    errorEl.style.display = 'none';
+
+    const checkIn = document.getElementById('check_in').value;
+    const checkOut = document.getElementById('check_out').value;
+
+    try {
+      const { data: rooms } = await api.get(`/api/v1/bookings/availability?check_in=${checkIn}&check_out=${checkOut}`);
+      renderRoomResults(rooms, checkIn, checkOut);
+      document.getElementById('results-section').style.display = 'block';
+      document.getElementById('pet-section').style.display = 'none';
+      document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    }
+  });
+
+  function renderRoomResults(rooms, checkIn, checkOut) {
+    const el = document.getElementById('room-results');
+    if (rooms.length === 0) {
+      el.innerHTML = '<p class="ledger-empty">ไม่พบห้องพักในระบบ</p>';
+      return;
+    }
+    el.innerHTML = rooms.map((room) => `
+      <div class="ledger-row">
+        <span class="key-tag ${room.is_available ? 'is-available' : 'is-unavailable'}">${room.room_number}</span>
+        <div class="ledger-main">
+          <h3>${room.room_type}</h3>
+          <div class="ledger-meta">รองรับแมวได้ ${room.capacity_pets} ตัว · ${Number(room.base_price_per_night).toLocaleString('th-TH')} บาท/คืน</div>
+        </div>
+        <div class="ledger-side">
+          ${room.is_available
+            ? `<span class="status-tag status-confirmed">ว่าง</span> <button class="btn btn-primary" data-room-id="${room.id}">เลือกห้องนี้</button>`
+            : `<span class="status-tag status-cancelled">ไม่ว่าง</span>`
+          }
+        </div>
+      </div>
+    `).join('');
+
+    el.querySelectorAll('button[data-room-id]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const room = rooms.find((r) => r.id === btn.dataset.roomId);
+        selectRoom(room, checkIn, checkOut);
+      });
+    });
+  }
+
+  // --- Step 2: pet + confirm ---
+  async function selectRoom(room, checkIn, checkOut) {
+    selectedRoom = { ...room, check_in: checkIn, check_out: checkOut };
+
+    document.getElementById('selected-room-summary').innerHTML = `
+      <div class="ledger-row" style="border-bottom:none; padding-top:0;">
+        <span class="key-tag is-available">${room.room_number}</span>
+        <div class="ledger-main">
+          <h3>${room.room_type}</h3>
+          <div class="ledger-meta">${checkIn} ถึง ${checkOut}</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('pet-section').style.display = 'block';
+    document.getElementById('pet-section').scrollIntoView({ behavior: 'smooth' });
+
+    currentUser = await getSession();
+    if (!currentUser) {
+      document.getElementById('login-required-panel').style.display = 'block';
+      document.getElementById('booking-form').style.display = 'none';
+      document.getElementById('login-required-link').href = `login.html?next=booking.html`;
+      return;
+    }
+
+    document.getElementById('login-required-panel').style.display = 'none';
+    document.getElementById('booking-form').style.display = 'block';
+    document.getElementById('booking-success').style.display = 'none';
+
+    await Promise.all([loadPets(), loadQuote()]);
+  }
+
+  async function loadPets() {
+    const select = document.getElementById('pet_id');
+    const { data: pets } = await api.get('/api/v1/pets/me');
+    if (pets.length === 0) {
+      select.innerHTML = '<option value="">— ยังไม่มีน้องแมว เพิ่มด้านล่างก่อน —</option>';
+    } else {
+      select.innerHTML = pets.map((p) => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+  }
+
+  document.getElementById('add-pet-btn').addEventListener('click', async () => {
+    const name = document.getElementById('new_pet_name').value.trim();
+    if (!name) { alert('กรุณากรอกชื่อน้องแมว'); return; }
+    const breed = document.getElementById('new_pet_breed').value.trim();
+    const weight = document.getElementById('new_pet_weight').value;
+
+    try {
+      await api.post('/api/v1/pets', {
+        name,
+        breed: breed || undefined,
+        weight_kg: weight ? Number(weight) : undefined,
+      });
+      document.getElementById('new_pet_name').value = '';
+      document.getElementById('new_pet_breed').value = '';
+      document.getElementById('new_pet_weight').value = '';
+      await loadPets();
+    } catch (err) {
+      alert(`เพิ่มน้องแมวไม่สำเร็จ: ${err.message}`);
+    }
+  });
+
+  async function loadQuote() {
+    const el = document.getElementById('quote-summary');
+    try {
+      const { data: quote } = await api.post('/api/v1/bookings/quote', {
+        room_id: selectedRoom.id,
+        check_in: selectedRoom.check_in,
+        check_out: selectedRoom.check_out,
+      });
+      el.innerHTML = `
+        <div class="ledger-row" style="border:none; padding:0;">
+          <div class="ledger-main"><h3>${quote.nights} คืน × ${Number(quote.nightly_rate).toLocaleString('th-TH')} บาท</h3></div>
+          <div class="ledger-side"><strong>${Number(quote.total_price).toLocaleString('th-TH')} บาท</strong></div>
+        </div>
+      `;
+    } catch (err) {
+      el.innerHTML = `<p class="form-error" style="margin:0;">${err.message}</p>`;
+    }
+  }
+
+  document.getElementById('booking-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('booking-error');
+    errorEl.style.display = 'none';
+
+    const petId = document.getElementById('pet_id').value;
+    if (!petId) { errorEl.textContent = 'กรุณาเลือกหรือเพิ่มน้องแมวก่อน'; errorEl.style.display = 'block'; return; }
+
+    try {
+      const { data } = await api.post('/api/v1/bookings', {
+        pet_id: petId,
+        room_id: selectedRoom.id,
+        check_in: selectedRoom.check_in,
+        check_out: selectedRoom.check_out,
+        special_requests: document.getElementById('special_requests').value || undefined,
+      });
+
+      document.getElementById('booking-form').style.display = 'none';
+      const successEl = document.getElementById('booking-success');
+      successEl.style.display = 'block';
+      successEl.innerHTML = `
+        <h3>จองสำเร็จ! รหัสการจอง ${data.booking.booking_code}</h3>
+        <p>ห้อง ${data.booking.room_number} · ${data.booking.check_in} ถึง ${data.booking.check_out} · ยอดชำระ ${Number(data.booking.total_price).toLocaleString('th-TH')} บาท</p>
+        <p>คุณจะได้รับ <strong>${data.purchase.points_earned} แต้ม</strong> (แต้มรอชำระเงิน) เมื่อชำระเงินสำเร็จ</p>
+        <a class="btn btn-primary" href="checkout.html?bookingId=${data.booking.id}">ไปชำระเงิน</a>
+      `;
+    } catch (err) {
+      errorEl.textContent = err.message;
+      errorEl.style.display = 'block';
+    }
+  });
+
+  renderNav('booking');
+</script>
+</body>
+</html>

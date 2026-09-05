@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>เข้าสู่ระบบ — Catnap Hotel</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <section>
+    <div class="wrap" style="max-width: 26rem;">
+      <h1>เข้าสู่ระบบด้วย LINE</h1>
+      <p>ใช้บัญชี LINE เดิมของคุณเพื่อจองห้องพัก เช็คแต้มสะสม และรับการแจ้งเตือนผ่าน LINE Official Account ของเรา</p>
+      <div class="panel" style="margin-top: 1.5rem;">
+        <a class="btn btn-primary btn-block" id="line-login-btn" href="#">
+          เข้าสู่ระบบด้วย LINE
+        </a>
+        <p class="hint center" style="margin-top: 0.9rem;">ระบบจะพาไปหน้ายืนยันตัวตนของ LINE แล้วกลับมาที่เว็บนี้อัตโนมัติ</p>
+      </div>
+      <p id="already-in" class="hint" style="display:none;">คุณเข้าสู่ระบบอยู่แล้ว กำลังพาไปยังโปรไฟล์...</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  // If a `next` page was requested (e.g. login.html?next=booking.html),
+  // remember it so auth-callback.html can send the user there after
+  // sign-in. NOTE: this can't be passed as a query param through the
+  // LINE OAuth redirect - our backend's callback always lands on one
+  // fixed URL (see auth.controller.js) - so we stash it client-side
+  // instead and auth-callback.html picks it up.
+  const nextPage = new URLSearchParams(window.location.search).get('next') || 'profile.html';
+  sessionStorage.setItem('catnap_next', nextPage);
+  document.getElementById('line-login-btn').href = `${API_BASE}/api/v1/auth/line/login`;
+
+  (async () => {
+    const user = await renderNav('login');
+    if (user) {
+      document.getElementById('already-in').style.display = 'block';
+      window.location.href = nextPage;
+    }
+  })();
+</script>
+</body>
+</html>

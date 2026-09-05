@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Catnap Hotel — โรงแรมพักฝากแมวส่วนตัว</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>ให้น้องแมวได้พักผ่อน<br />เหมือนอยู่บ้าน</h1>
+        <p>ห้องพักส่วนตัว 8 ห้องที่ Catnap Hotel จองง่าย จ่ายผ่านบัตรหรือพร้อมเพย์ และสะสมแต้มได้ทุกการเข้าพัก</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="booking.html">ดูห้องว่างและจองเลย</a>
+          <a class="btn btn-secondary" href="login.html">เข้าสู่ระบบด้วย LINE</a>
+        </div>
+      </div>
+      <div class="hero-art">
+        <svg viewBox="0 0 260 260" width="260" height="260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="130" cy="130" r="115" fill="#ECE0BE" opacity="0.6"/>
+          <circle cx="130" cy="130" r="80" fill="#D9A62E" opacity="0.5"/>
+          <ellipse cx="130" cy="168" rx="78" ry="42" fill="#5B6B73"/>
+          <path d="M75 150 Q95 105 130 108 Q165 105 185 150 Q160 168 130 168 Q100 168 75 150Z" fill="#3E4A50"/>
+          <path d="M92 118 L84 96 L106 112Z" fill="#3E4A50"/>
+          <path d="M168 118 L176 96 L154 112Z" fill="#3E4A50"/>
+          <circle cx="114" cy="130" r="2.6" fill="#F3EFE4"/>
+          <circle cx="146" cy="130" r="2.6" fill="#F3EFE4"/>
+          <path d="M120 140 Q130 146 140 140" stroke="#F3EFE4" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <path d="M185 158 Q215 150 210 118" stroke="#3E4A50" stroke-width="9" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap feature-strip">
+      <div class="feature">
+        <h3>ห้องส่วนตัว 8 ห้อง</h3>
+        <p>แต่ละห้องรองรับแมวได้ตามขนาดห้อง ไม่ปะปนกับแมวตัวอื่น</p>
+      </div>
+      <div class="feature">
+        <h3>จ่ายผ่านบัตรหรือพร้อมเพย์</h3>
+        <p>ชำระเงินออนไลน์ผ่านระบบ Stripe ปลอดภัย รองรับ PromptPay</p>
+      </div>
+      <div class="feature">
+        <h3>แจ้งเตือนผ่าน LINE</h3>
+        <p>เข้าสู่ระบบด้วย LINE และเช็คแต้มสะสมได้จากแชท OA</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>จองใน 3 ขั้นตอน</h2>
+      <div class="steps">
+        <div class="step">
+          <h3>เลือกวันที่และห้อง</h3>
+          <p>ค้นหาห้องว่างตามวันที่เข้าพัก-ออก แล้วเลือกห้องที่ถูกใจ</p>
+        </div>
+        <div class="step">
+          <h3>ยืนยันและชำระเงิน</h3>
+          <p>เลือกน้องแมวที่จะเข้าพัก แล้วชำระเงินผ่านบัตรหรือพร้อมเพย์</p>
+        </div>
+        <div class="step">
+          <h3>รับแต้มสะสม</h3>
+          <p>เมื่อชำระเงินสำเร็จ ระบบจะปลดล็อกแต้มสะสมให้ทันที</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="wrap">
+      <div class="panel-title">
+        <h2>ห้องพักของเรา</h2>
+        <a href="booking.html">ดูทั้งหมดและเช็คห้องว่าง</a>
+      </div>
+      <div class="ledger" id="room-preview">
+        <p class="ledger-empty">กำลังโหลดข้อมูลห้องพัก...</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav('home');
+
+  async function loadRoomPreview() {
+    const el = document.getElementById('room-preview');
+    try {
+      const { data: rooms } = await api.get('/api/v1/bookings/rooms');
+      if (rooms.length === 0) {
+        el.innerHTML = '<p class="ledger-empty">ยังไม่มีห้องพักในระบบ</p>';
+        return;
+      }
+      el.innerHTML = rooms.slice(0, 4).map((room) => `
+        <div class="ledger-row">
+          <span class="key-tag">${room.room_number}</span>
+          <div class="ledger-main">
+            <h3>${room.room_type}</h3>
+            <div class="ledger-meta">รองรับแมวได้ ${room.capacity_pets} ตัว</div>
+          </div>
+          <div class="ledger-side">${Number(room.base_price_per_night).toLocaleString('th-TH')} บาท/คืน</div>
+        </div>
+      `).join('');
+    } catch (err) {
+      el.innerHTML = `<p class="ledger-empty">โหลดข้อมูลห้องพักไม่สำเร็จ: ${err.message}</p>`;
+    }
+  }
+  loadRoomPreview();
+</script>
+</body>
+</html>

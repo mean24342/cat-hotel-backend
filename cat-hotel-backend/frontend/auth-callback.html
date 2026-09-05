@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>กำลังเข้าสู่ระบบ — Catnap Hotel</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <section class="center">
+    <div class="wrap">
+      <span class="spinner" aria-hidden="true"></span>
+      <p id="status-text" style="margin: 1rem auto 0;">กำลังยืนยันตัวตน...</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  // The backend redirects here (see auth.controller.js) AFTER already
+  // setting the session cookie during the LINE Login callback - so by
+  // the time this page loads, we're already signed in. We just confirm
+  // that via /auth/session and then move on to wherever the user was
+  // headed (see login.html for where `catnap_next` gets set).
+  (async () => {
+    await renderNav('login');
+    const user = await getSession();
+    const statusEl = document.getElementById('status-text');
+
+    if (!user) {
+      statusEl.textContent = 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+      const retry = document.createElement('a');
+      retry.href = 'login.html';
+      retry.className = 'btn btn-primary';
+      retry.style.marginTop = '1rem';
+      retry.textContent = 'กลับไปหน้าเข้าสู่ระบบ';
+      statusEl.after(retry);
+      return;
+    }
+
+    statusEl.textContent = `ยินดีต้อนรับ ${user.display_name}! กำลังพาไปต่อ...`;
+    const nextPage = sessionStorage.getItem('catnap_next') || 'profile.html';
+    sessionStorage.removeItem('catnap_next');
+    setTimeout(() => { window.location.href = nextPage; }, 600);
+  })();
+</script>
+</body>
+</html>

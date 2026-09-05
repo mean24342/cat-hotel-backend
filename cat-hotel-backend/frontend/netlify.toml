@@ -1,0 +1,9 @@
+# Static-site deploy config for Netlify. No build step (see README) -
+# this just tells Netlify to publish this folder as-is.
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200

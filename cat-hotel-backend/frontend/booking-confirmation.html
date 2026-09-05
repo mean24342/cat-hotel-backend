@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>สถานะการจอง — Catnap Hotel</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <section>
+    <div class="wrap" style="max-width: 30rem;">
+      <h1>สถานะการจอง</h1>
+      <div class="panel" id="status-panel">
+        <p class="muted"><span class="spinner" aria-hidden="true"></span> กำลังตรวจสอบการชำระเงิน...</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav();
+
+  const bookingId = new URLSearchParams(window.location.search).get('bookingId');
+  const panel = document.getElementById('status-panel');
+
+  // Payment confirmation happens server-side via the Stripe webhook,
+  // asynchronously - this page did NOT just receive proof of payment
+  // from Stripe's redirect, so we poll our own backend for the
+  // booking's real status instead of assuming success.
+  const MAX_ATTEMPTS = 15;
+  const POLL_INTERVAL_MS = 2000;
+
+  function renderStatus(booking) {
+    if (booking.status === 'confirmed') {
+      panel.innerHTML = `
+        <h3>ชำระเงินสำเร็จ! <span class="status-tag status-confirmed">ยืนยันแล้ว</span></h3>
+        <p>รหัสการจอง ${booking.booking_code} · ห้อง ${booking.room_number} · ${booking.check_in} ถึง ${booking.check_out}</p>
+        <a class="btn btn-primary" href="profile.html">ดูการจองและแต้มสะสมของฉัน</a>
+      `;
+      return true;
+    }
+    if (booking.status === 'cancelled') {
+      panel.innerHTML = `<h3>การจองนี้ถูกยกเลิกแล้ว</h3><a class="btn btn-secondary" href="booking.html">จองใหม่</a>`;
+      return true;
+    }
+    return false; // still pending - keep polling
+  }
+
+  async function poll(attempt = 1) {
+    if (!bookingId) {
+      panel.innerHTML = '<p class="form-error">ไม่พบรหัสการจอง (bookingId) ใน URL</p>';
+      return;
+    }
+
+    try {
+      const { data: booking } = await api.get(`/api/v1/bookings/${bookingId}`);
+      const done = renderStatus(booking);
+      if (done) return;
+    } catch (err) {
+      panel.innerHTML = `<p class="form-error">${err.message}</p>`;
+      return;
+    }
+
+    if (attempt >= MAX_ATTEMPTS) {
+      panel.innerHTML = `
+        <p>การชำระเงินอาจใช้เวลาสักครู่ (โดยเฉพาะ PromptPay) กรุณาตรวจสอบอีกครั้งในไม่ช้า</p>
+        <button class="btn btn-secondary" onclick="poll(1)">ตรวจสอบอีกครั้ง</button>
+      `;
+      return;
+    }
+
+    setTimeout(() => poll(attempt + 1), POLL_INTERVAL_MS);
+  }
+
+  poll();
+</script>
+</body>
+</html>

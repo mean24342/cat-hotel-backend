@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>โปรไฟล์ของฉัน — Catnap Hotel</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <section style="padding-bottom: 1.5rem;">
+    <div class="wrap">
+      <h1 id="greeting">โปรไฟล์ของฉัน</h1>
+
+      <div class="panel">
+        <div class="points-hero">
+          <span class="points-number" id="points-balance">–</span>
+          <span class="muted">แต้มสะสม</span>
+          <span class="tier-pill" id="tier-pill" style="display:none;"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" style="padding-top: 2.5rem;">
+    <div class="wrap">
+      <h2>ประวัติการจอง</h2>
+      <div class="ledger" id="bookings-list">
+        <p class="ledger-empty">กำลังโหลด...</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top: 2.5rem;">
+    <div class="wrap">
+      <h2>ประวัติแต้มสะสม</h2>
+      <div class="ledger" id="points-history">
+        <p class="ledger-empty">กำลังโหลด...</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  const ENTRY_TYPE_LABEL = { earn: 'ได้รับแต้ม', redeem: 'ใช้แต้ม', expire: 'แต้มหมดอายุ', adjustment: 'ปรับปรุงแต้ม' };
+  const STATUS_LABEL = {
+    pending: 'รอชำระเงิน', confirmed: 'ยืนยันแล้ว', checked_in: 'เช็คอินแล้ว',
+    checked_out: 'เช็คเอาท์แล้ว', cancelled: 'ยกเลิกแล้ว', no_show: 'ไม่มาเข้าพัก',
+  };
+
+  async function loadProfile() {
+    const user = await renderNav('profile');
+    if (!user) {
+      sessionStorage.setItem('catnap_next', 'profile.html');
+      window.location.href = 'login.html?next=profile.html';
+      return;
+    }
+
+    document.getElementById('greeting').textContent = `สวัสดี ${user.display_name}`;
+
+    const [{ data: balance }, { data: bookings }, { data: history }] = await Promise.all([
+      api.get(`/api/v1/points/${user.id}/balance`),
+      api.get('/api/v1/bookings/me?limit=20'),
+      api.get(`/api/v1/points/${user.id}/history?limit=20`),
+    ]);
+
+    document.getElementById('points-balance').textContent = balance.points_balance.toLocaleString('th-TH');
+    if (balance.tier_name) {
+      const tierEl = document.getElementById('tier-pill');
+      tierEl.textContent = `ระดับ ${balance.tier_name}`;
+      tierEl.style.display = 'inline-block';
+    }
+
+    renderBookings(bookings);
+    renderPointsHistory(history);
+  }
+
+  function renderBookings(bookings) {
+    const el = document.getElementById('bookings-list');
+    if (bookings.length === 0) {
+      el.innerHTML = `<p class="ledger-empty">ยังไม่มีประวัติการจอง — <a href="booking.html">จองห้องแรกของคุณ</a></p>`;
+      return;
+    }
+    el.innerHTML = bookings.map((b) => `
+      <div class="ledger-row">
+        <span class="key-tag">${b.room_number}</span>
+        <div class="ledger-main">
+          <h3>${b.booking_code}</h3>
+          <div class="ledger-meta">${b.room_type} · ${b.check_in} ถึง ${b.check_out}</div>
+        </div>
+        <div class="ledger-side">
+          <span class="status-tag status-${b.status}">${STATUS_LABEL[b.status] || b.status}</span><br/>
+          ${Number(b.total_price).toLocaleString('th-TH')} บาท
+          ${b.status === 'pending' ? `<br/><a href="checkout.html?bookingId=${b.id}">ไปชำระเงิน</a> · <a href="#" data-cancel="${b.id}">ยกเลิก</a>` : ''}
+        </div>
+      </div>
+    `).join('');
+
+    el.querySelectorAll('a[data-cancel]').forEach((a) => {
+      a.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!confirm('ยืนยันยกเลิกการจองนี้?')) return;
+        try {
+          await api.patch(`/api/v1/bookings/${a.dataset.cancel}/cancel`, {});
+          loadProfile();
+        } catch (err) {
+          alert(`ยกเลิกไม่สำเร็จ: ${err.message}`);
+        }
+      });
+    });
+  }
+
+  function renderPointsHistory(history) {
+    const el = document.getElementById('points-history');
+    if (history.length === 0) {
+      el.innerHTML = '<p class="ledger-empty">ยังไม่มีประวัติแต้มสะสม</p>';
+      return;
+    }
+    el.innerHTML = history.map((h) => `
+      <div class="ledger-row">
+        <div class="ledger-main">
+          <h3>${ENTRY_TYPE_LABEL[h.entry_type] || h.entry_type}</h3>
+          <div class="ledger-meta">${new Date(h.created_at).toLocaleDateString('th-TH')} ${h.note ? '· ' + h.note : ''}</div>
+        </div>
+        <div class="ledger-side">
+          <strong>${h.points > 0 ? '+' : ''}${h.points}</strong><br/>
+          <span class="ledger-meta">คงเหลือ ${h.balance_after.toLocaleString('th-TH')}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>

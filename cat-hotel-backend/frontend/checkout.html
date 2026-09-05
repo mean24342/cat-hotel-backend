@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ชำระเงิน — Catnap Hotel</title>
+<link rel="stylesheet" href="css/style.css" />
+<script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main>
+  <section>
+    <div class="wrap" style="max-width: 30rem;">
+      <h1>ชำระเงิน</h1>
+      <p>รองรับบัตรเครดิต/เดบิต และ PromptPay ผ่าน Stripe</p>
+
+      <div class="panel">
+        <div id="payment-element">
+          <p class="muted"><span class="spinner" aria-hidden="true"></span> กำลังเตรียมหน้าชำระเงิน...</p>
+        </div>
+        <button id="submit-btn" class="btn btn-primary btn-block" style="margin-top:1.2rem;" disabled>ชำระเงิน</button>
+        <p id="error-message" class="form-error" style="display:none;"></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  renderNav();
+
+  const bookingId = new URLSearchParams(window.location.search).get('bookingId');
+  let stripe, elements;
+
+  function showError(message) {
+    const el = document.getElementById('error-message');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+
+  async function init() {
+    if (!bookingId) { showError('ไม่พบรหัสการจอง (bookingId) ใน URL'); return; }
+
+    let data;
+    try {
+      // credentials/session are handled by api.js - the backend knows
+      // WHO is paying from the session cookie, not from anything in
+      // this request body.
+      const res = await api.post(`/api/v1/payments/bookings/${bookingId}/intent`);
+      data = res.data;
+    } catch (err) {
+      showError(err.message);
+      return;
+    }
+
+    stripe = Stripe(data.publishable_key);
+    elements = stripe.elements({ clientSecret: data.client_secret });
+    const paymentElement = elements.create('payment');
+    document.getElementById('payment-element').innerHTML = '';
+    paymentElement.mount('#payment-element');
+
+    document.getElementById('submit-btn').disabled = false;
+  }
+
+  async function handleSubmit() {
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('error-message').style.display = 'none';
+
+    // Handles both card (incl. 3D Secure if needed) and PromptPay
+    // (displays the QR to scan) through one call. This page never
+    // decides "payment succeeded" itself - only the backend's
+    // signature-verified Stripe webhook does that.
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}${window.location.pathname.replace('checkout.html', 'booking-confirmation.html')}?bookingId=${bookingId}`,
+      },
+    });
+
+    if (error) {
+      showError(error.message);
+      document.getElementById('submit-btn').disabled = false;
+    }
+  }
+
+  document.getElementById('submit-btn').addEventListener('click', handleSubmit);
+  init();
+</script>
+</body>
+</html>
