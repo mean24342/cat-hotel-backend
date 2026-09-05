@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy manifests first so `npm ci` is cached unless dependencies change.
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy the rest of the backend (frontend/ is excluded - see .dockerignore -
 # it's a static site meant to be deployed separately, e.g. Netlify/Vercel).
